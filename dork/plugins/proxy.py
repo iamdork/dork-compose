@@ -7,6 +7,9 @@ import glob
 
 class Plugin(dork.plugin.Plugin):
 
+    # Contains the urls for outputting later on.
+    domains = {}
+
     def initialize(self):
         self.hosts = {}
         self.__client = Client()
@@ -78,6 +81,12 @@ class Plugin(dork.plugin.Plugin):
                             if external == '443':
                                 service['environment']['VIRTUAL_PROTO'] = 'https'
                             service['environment']['VIRTUAL_PORT'] = int(internal)
+
+                            # Save the host data so we can show an url to user at the end.
+                            if external == '443':
+                                self.domains[service['name']] = {'port': internal, 'host': domain, 'proto': 'https'}
+                            else:
+                                self.domains[service['name']] = {'port': internal, 'host': domain, 'proto': 'http'}
                 service['ports'] = []
 
     def collect_auth_files(self):
@@ -134,3 +143,8 @@ class Plugin(dork.plugin.Plugin):
             if network in self.proxy_service['NetworkSettings']['Networks']:
                 self.__client.disconnect_container_from_network(self.proxy_service, network)
                 self.reload_proxy()
+
+    def cleanup(self):
+        print("Listening on following urls:")
+        for service in self.domains:
+            print("\t%s://%s:%s" % (self.domains[service]['proto'], self.domains[service]['host'], self.domains[service]['port']))
