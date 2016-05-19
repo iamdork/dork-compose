@@ -9,6 +9,7 @@ class Plugin(dork.plugin.Plugin):
 
     # Contains the urls for outputting later on.
     domains = {}
+    show_urls = False;
 
     def initialize(self):
         self.hosts = {}
@@ -129,6 +130,8 @@ class Plugin(dork.plugin.Plugin):
             if network not in self.proxy_service['NetworkSettings']['Networks']:
                 self.__client.connect_container_to_network(self.proxy_service, network)
                 self.reload_proxy()
+                self.show_urls = True
+
 
     def removing_networks(self, networks):
 
@@ -145,6 +148,8 @@ class Plugin(dork.plugin.Plugin):
                 self.reload_proxy()
 
     def cleanup(self):
-        print("Listening on following urls:")
-        for service in self.domains:
-            print("\t%s://%s:%s" % (self.domains[service]['proto'], self.domains[service]['host'], self.domains[service]['port']))
+        # Shows the urls of all services with exposed filters. Works only if preprocess_config was called.
+        if self.show_urls:
+            print("Listening on following urls:")
+            for service in self.domains:
+                print("\t%s://%s:%s" % (self.domains[service]['proto'], self.domains[service]['host'], self.domains[service]['port']))
