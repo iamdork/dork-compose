@@ -7,13 +7,11 @@ import glob
 
 class Plugin(dork.plugin.Plugin):
 
-    # Contains the urls for outputting later on.
-    domains = {}
-    show_urls = False;
 
     def initialize(self):
         self.hosts = {}
         self.__client = Client()
+        self.__show_urls = False
 
     def service_domain(self, service=None):
         return '--'.join(filter(tru, [
@@ -77,7 +75,6 @@ class Plugin(dork.plugin.Plugin):
                             if 'environment' not in service:
                                 service['environment'] = {}
                             domain = self.service_domain() if external == '80' or external == '443' else self.service_domain(service['name'])
-                            self.hosts[service['name']] = domain
                             service['environment']['VIRTUAL_HOST'] = domain
                             if external == '443':
                                 service['environment']['VIRTUAL_PROTO'] = 'https'
@@ -85,9 +82,9 @@ class Plugin(dork.plugin.Plugin):
 
                             # Save the host data so we can show an url to user at the end.
                             if external == '443':
-                                self.domains[service['name']] = {'port': internal, 'host': domain, 'proto': 'https'}
+                                self.hosts[service['name']] = {'port': internal, 'host': domain, 'proto': 'https'}
                             else:
-                                self.domains[service['name']] = {'port': internal, 'host': domain, 'proto': 'http'}
+                                self.hosts[service['name']] = {'port': internal, 'host': domain, 'proto': 'http'}
                 service['ports'] = []
 
     def collect_auth_files(self):
@@ -115,7 +112,8 @@ class Plugin(dork.plugin.Plugin):
 
         if self.auth_dir:
             auth = self.collect_auth_files()
-            for name, host in self.hosts.iteritems():
+            for name, service in self.hosts.iteritems():
+                host = service['host']
                 file = []
                 if '.auth' in auth:
                     file.extend(auth['.auth'])
@@ -130,14 +128,14 @@ class Plugin(dork.plugin.Plugin):
             if network not in self.proxy_service['NetworkSettings']['Networks']:
                 self.__client.connect_container_to_network(self.proxy_service, network)
                 self.reload_proxy()
-                self.show_urls = True
+                self.__show_urls = True
 
 
     def removing_networks(self, networks):
 
         if self.auth_dir:
-            for name, host in self.hosts.iteritems():
-                f = '%s/%s' % (self.auth_dir, host)
+            for name, service in self.hosts.iteritems():
+                f = '%s/%s' % (self.auth_dir, service['host'])
                 if os.path.exists(f):
                     os.remove(f)
 
@@ -149,7 +147,7 @@ class Plugin(dork.plugin.Plugin):
 
     def cleanup(self):
         # Shows the urls of all services with exposed filters. Works only if preprocess_config was called.
-        if self.show_urls:
+        if self.__show_urls:
             print("Listening on following urls:")
-            for service in self.domains:
-                print("\t%s://%s:%s" % (self.domains[service]['proto'], self.domains[service]['host'], self.domains[service]['port']))
+            for name, service in self.hosts.iteritems():
+                print("\t%s://%s:%s" % (service['proto'], service['host'], service['port']))
