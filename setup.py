@@ -8,7 +8,7 @@ https://github.com/pypa/sampleproject
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 
-version = '0.1.3'
+version = '0.1.6'
 
 setup(
     name='dork-compose',
@@ -65,7 +65,8 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
         'docker-compose==1.7.1',
-        'gitpython'
+        'gitpython',
+        'terminaltables'
     ],
 
     # List additional groups of dependencies here (e.g. development

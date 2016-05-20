@@ -11,7 +11,7 @@ def load(plugins):
     environment = {
         'DORK_PROJECT': 'default',
         'DORK_INSTANCE': 'default',
-        'DORK_REPOSITORY_PATH': os.path.abspath(os.curdir)
+        'DORK_SOURCE': os.path.abspath(os.curdir)
     }
     environment.update(os.environ)
 
@@ -29,8 +29,7 @@ def load(plugins):
         instances.append(instance)
         environment.update(instance.environment())
 
-    for instance in instances:
-        instance.initialize()
+    instances = filter(lambda i: i.initialize(), instances)
 
     # If there is no explicit project name in the environment, set
     # [project]--[instance]
@@ -63,7 +62,7 @@ class Plugin:
         self.log = logging.getLogger(__name__)
 
     def initialize(self):
-        pass
+        return True
 
     def cleanup(self):
         pass
@@ -73,7 +72,7 @@ class Plugin:
 
     @property
     def basedir(self):
-        return self.env['DORK_REPOSITORY_PATH']
+        return self.env['DORK_SOURCE']
 
     @property
     def project(self):
@@ -82,6 +81,9 @@ class Plugin:
     @property
     def instance(self):
         return self.env['DORK_INSTANCE']
+
+    def info(self):
+        return {}
 
     def preprocess_config(self, config):
         """
@@ -116,11 +118,19 @@ class Plugin:
         """
         pass
 
-    def removing_networks(self, networkds):
+    def removing_networks(self, networks):
         """
         Act before networks are removed by docker-compose.
 
         :type volumes: list[compose.network.Network]
+        """
+        pass
+
+    def building_service(self, service):
+        """
+        Alter a service before it will be built.
+        :param service:
+        :return:
         """
         pass
 
