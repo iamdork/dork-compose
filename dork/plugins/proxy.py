@@ -153,4 +153,4 @@ class Plugin(dork.plugin.Plugin):
         if self.__show_urls:
             print("Listening on following urls:")
             for name, service in self.hosts.iteritems():
-                print("\t%s://%s:%s" % (service['proto'], service['host'], service['port']))
+                self.log.info("\t%s://%s:%s" % (service['proto'], service['host'], service['port']))
