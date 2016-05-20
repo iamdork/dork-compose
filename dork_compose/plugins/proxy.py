@@ -7,8 +7,10 @@ import glob
 
 class Plugin(dork_compose.plugin.Plugin):
 
+
     def initialize(self):
         self.hosts = {}
+        self.__show_urls = False
         try:
             self.__client = Client()
 
@@ -76,11 +78,16 @@ class Plugin(dork_compose.plugin.Plugin):
                             if 'environment' not in service:
                                 service['environment'] = {}
                             domain = self.service_domain() if external == '80' or external == '443' else self.service_domain(service['name'])
-                            self.hosts[service['name']] = domain
                             service['environment']['VIRTUAL_HOST'] = domain
                             if external == '443':
                                 service['environment']['VIRTUAL_PROTO'] = 'https'
                             service['environment']['VIRTUAL_PORT'] = int(internal)
+
+                            # Save the host data so we can show an url to user at the end.
+                            if external == '443':
+                                self.hosts[service['name']] = {'port': internal, 'host': domain, 'proto': 'https'}
+                            else:
+                                self.hosts[service['name']] = {'port': internal, 'host': domain, 'proto': 'http'}
                 service['ports'] = []
 
     def collect_auth_files(self):
@@ -108,7 +115,8 @@ class Plugin(dork_compose.plugin.Plugin):
 
         if self.auth_dir:
             auth = self.collect_auth_files()
-            for name, host in self.hosts.iteritems():
+            for name, service in self.hosts.iteritems():
+                host = service['host']
                 file = []
                 if '.auth' in auth:
                     file.extend(auth['.auth'])
@@ -123,12 +131,14 @@ class Plugin(dork_compose.plugin.Plugin):
             if network not in self.proxy_service['NetworkSettings']['Networks']:
                 self.__client.connect_container_to_network(self.proxy_service, network)
                 self.reload_proxy()
+                self.__show_urls = True
+
 
     def removing_networks(self, networks):
 
         if self.auth_dir:
-            for name, host in self.hosts.iteritems():
-                f = '%s/%s' % (self.auth_dir, host)
+            for name, service in self.hosts.iteritems():
+                f = '%s/%s' % (self.auth_dir, service['host'])
                 if os.path.exists(f):
                     os.remove(f)
 
@@ -137,3 +147,10 @@ class Plugin(dork_compose.plugin.Plugin):
             if network in self.proxy_service['NetworkSettings']['Networks']:
                 self.__client.disconnect_container_from_network(self.proxy_service, network)
                 self.reload_proxy()
+
+    def cleanup(self):
+        # Shows the urls of all services with exposed filters. Works only if preprocess_config was called.
+        if self.__show_urls:
+            print("Listening on following urls:")
+            for name, service in self.hosts.iteritems():
+                self.log.info("\t%s://%s:%s" % (service['proto'], service['host'], service['port']))
