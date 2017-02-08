@@ -1,4 +1,4 @@
-version: '2'
+version: '2.1'
 
 services:
   nginx:
@@ -19,12 +19,15 @@ services:
   dockergen:
     image: iamdork/dockergen
     build: ../dockergen
+    userns_mode: host
+    privileged: true
     labels:
     - org.iamdork.auxiliary
     volumes_from:
     - nginx
     volumes:
     - ${DOCKER_SOCK}:/tmp/docker.sock:ro
+    - ../dockergen/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl
     command: -notify-sighup dork_aux_proxy_nginx_1 -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     environment:
       HTTPS_METHOD: ${DORK_PROXY_HTTPS_METHOD}

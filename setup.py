@@ -5,7 +5,7 @@ https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
 
-import os
+import dork_compose
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
@@ -17,7 +17,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=os.environ.get('TRAVIS_TAG'),
+    version=dork_compose.__version__,
 
     description='docker-compose with magicks.',
 
@@ -70,7 +70,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'docker-compose==1.8.1',
+        'docker-compose==1.10.1',
         'gitpython',
         'terminaltables',
         'filelock',
@@ -90,7 +90,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'dork-compose=dork_compose:run',
+            'dork-compose=dork_compose.main:run',
         ],
     },
 )
