@@ -134,7 +134,7 @@ upstream {{ $host }} {
 
 {{ if eq $https_method "redirect" }}
 server {
-	server_name {{ $host }};
+	server_name .{{ $host }};
 	listen 80 {{ $default_server }};
 	access_log /var/log/nginx/access.log vhost;
 	return 301 https://$host$request_uri;
@@ -142,7 +142,7 @@ server {
 {{ end }}
 
 server {
-	server_name {{ $host }};
+	server_name .{{ $host }};
 	listen 443 ssl http2 {{ $default_server }};
 	access_log /var/log/nginx/access.log vhost;
 
@@ -189,7 +189,7 @@ server {
 {{ if or (not $is_https) (eq $https_method "noredirect") }}
 
 server {
-	server_name {{ $host }};
+	server_name .{{ $host }};
 	listen 80 {{ $default_server }};
 	access_log /var/log/nginx/access.log vhost;
 
@@ -215,7 +215,7 @@ server {
 
 {{ if (and (not $is_https) (exists "/etc/nginx/certs/default.crt") (exists "/etc/nginx/certs/default.key")) }}
 server {
-	server_name {{ $host }};
+	server_name .{{ $host }};
 	listen 443 ssl http2 {{ $default_server }};
 	access_log /var/log/nginx/access.log vhost;
 	return 500;
