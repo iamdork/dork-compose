@@ -6,6 +6,7 @@ services:
     build: ../nginx
     labels:
     - org.iamdork.auxiliary
+    - org.iamdork.auxiliary.network
     ports:
     - "80:80"
     - "443:443"
