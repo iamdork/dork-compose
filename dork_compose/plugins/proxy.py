@@ -184,7 +184,7 @@ class Plugin(dork_compose.plugin.Plugin):
 
         for service in project.get_services():
             if self.auth_dir and 'environment' in service.options and 'VIRTUAL_HOST' in service.options['environment']:
-                lines = auth[service.name]
+                lines = '\n'.join(auth[service.name])
                 authfile = '%s/%s' % (self.auth_dir, service.options['environment']['VIRTUAL_HOST'])
                 if lines:
                     if not os.path.isdir(self.auth_dir):
